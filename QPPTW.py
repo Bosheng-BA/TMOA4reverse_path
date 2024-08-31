@@ -27,6 +27,7 @@ def Readjustment_time_windows(graph, weights, time_windows, path):
             if bj_e > timeout_f and timein_f >= aj_e:
                 updated_time_windows[edge][i] = (timeout_f, bj_e)
                 updated_time_windows[edge_conv] = updated_time_windows[edge]
+                # print('edge:', edge, (timeout_f, bj_e))
                 # print('2',reservation[1], time_window, updated_time_windows[edge_conv])
             # if timeout_f <= aj_e:
             #     if timeout_f - timein_f <= bj_e -aj_e:
@@ -62,9 +63,54 @@ def Readjustment_time_windows(graph, weights, time_windows, path):
     return updated_time_windows
 
 
+# def check_pushback():
+#     if check >= 2:  # When the stand have two ways to pushback, we need choose one
+#         for i in range(len(list_edge)):
+#             e = list_edge[i - 1]
+#             if e in pushback_edges:
+#                 graph_r[e[1]].remove(e)
+#                 graph[e[0]].remove(e)
+#                 path, COST, holding_time = MOA2.AMOA_star(source, target, costs, graph_r, time_windows,
+#                                                           start_time, out_angles,
+#                                                           in_angles, Stand, weights, cost_of_path, W, graph)
+#                 graph_r[e[1]].append(e)
+#                 graph[e[0]].append(e)
+#                 COST_list.append(COST)
+#                 print(COST, e, list_edge)
+#                 paths.append(path)
+#
+#         if COST_list:
+#             # 将 COST_list 中的所有集合扁平化为一个包含所有成本向量的列表
+#             # flattened_list = [item for sublist in COST_list if sublist is not None for item in sublist]
+#             flattened_list = list(COST_list)
+#             # 过滤掉所有的 None 元素
+#             filtered_list = [x for x in flattened_list if x is not None]
+#
+#             if filtered_list:
+#                 # 如果过滤后的列表不为空，则寻找最小成本向量
+#                 min_cost_vector = min(filtered_list, key=lambda x: list(x)[0][0])
+#             else:
+#                 # 如果过滤后的列表为空，则设置 min_cost_vector 为 None 或其他适当的默认值
+#                 min_cost_vector = None
+#
+#             COST = min_cost_vector
+#             if min_cost_vector:
+#                 path = paths[COST_list.index(COST)]
+#             else:
+#                 path = None
+#     else:  # the normal condition
+#         path, COST, holding_time = MOA2.AMOA_star(source, target, costs, graph_r, time_windows, start_time,
+#                                                   out_angles, in_angles,
+#                                                   Stand, weights, cost_of_path, W, graph)
+#
+#     check = check_pushback_times(graph, pushback_edges, source)
+#     list_edge = graph[source]
+
+
 def QPPTW_algorithm(graph, weights, time_windows, source, target, start_time, in_angles, out_angles, Stand):
     # 初始化一个空的斐波那契堆
     # fib_heap = heapdict()
+
     global new_label
     heap = []
 
@@ -173,7 +219,7 @@ def QPPTW_algorithm(graph, weights, time_windows, source, target, start_time, in
     return None, pathlist, time_windows, float('inf')
 
 
-def construct_labeled_path(graph, weights, time_windows, source, start_time, path):
+def construct_labeled_path(graph, weights, time_windows, source, start_time, path, flight):
     # 初始化标签字典
     labels = {v: [] for v in graph.keys()}
 
@@ -207,6 +253,8 @@ def construct_labeled_path(graph, weights, time_windows, source, start_time, pat
         # 检查时间窗口约束
         for window_start, window_end in time_windows[edge]:
             if arrival_time < window_start:
+                if window_start - arrival_time >= 1000:
+                    print(window_start - arrival_time, flight.departure, flight.arrivee, flight.callsign, edge)
                 # 如果到达时间早于时间窗口开始，则等待
                 arrival_time = window_start
             if window_start <= arrival_time <= window_end:

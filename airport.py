@@ -173,16 +173,16 @@ def load2(filename):
             print("\"" + words[0] + "\"")
             raise Exception("airport.load: unexpected line\n" + line)
         """New part"""  # 处理重复的Point，因为每一条line的端点被计算两遍
-        grouped_points = {}
-        for p in points:
-            if p.xy in grouped_points:
-                if p.ptype in 'Stand':
-                    grouped_points[p.xy] = p
-                elif p.ptype in ('Runway', 'pushback') and grouped_points[p.xy].ptype not in 'Stand':
-                    grouped_points[p.xy] = p
-            else:
+    grouped_points = {}
+    for p in points:
+        if p.xy in grouped_points:
+            if p.ptype in 'Stand':
                 grouped_points[p.xy] = p
-        points = list(grouped_points.values())
+            elif p.ptype in ('Runway', 'pushback') and grouped_points[p.xy].ptype not in 'Stand':
+                grouped_points[p.xy] = p
+        else:
+            grouped_points[p.xy] = p
+    points = list(grouped_points.values())
     file.close()
 
     airport = Airport(name, points, lines, runways)

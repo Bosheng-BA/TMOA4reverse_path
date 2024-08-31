@@ -14,6 +14,15 @@ class Line:
         self.label = label
 
 
+class Line0:
+    def __init__(self, taxiway, type, oneway, radium, points):
+        self.taxiway = taxiway
+        self.type = type
+        self.oneway = oneway
+        self.radium = radium
+        self.points = points
+
+
 def get_xy_int(str_xy):
     """ Convert a x,y string 'str_xy' to coordinates """
     (str_x, str_y) = str_xy.split(',')
@@ -55,7 +64,7 @@ def split_line(line):
             new_point = (new_x, new_y)
 
             temp_points.append(new_point)
-            new_lines.append(Line(line.taxiway, line.type, line.oneway, line.radium, temp_points))
+            new_lines.append(Line0(line.taxiway, line.type, line.oneway, line.radium, temp_points))
 
             points[i - 1] = new_point
             segment_length -= remaining_length
@@ -66,15 +75,20 @@ def split_line(line):
         current_length += segment_length
 
     if len(temp_points) > 1 and current_length >= 50:
-        new_lines.append(Line(line.taxiway, line.type, line.oneway, line.radium, temp_points))
+        new_lines.append(Line0(line.taxiway, line.type, line.oneway, line.radium, temp_points))
+        # print(temp_points)
     elif len(temp_points) > 1:
         # 如果最后一个片段小于50，和前一个片段合并
         if new_lines:
+            # print(temp_points)
             last_line = new_lines.pop()
             last_line.points.extend(temp_points[1:])
             new_lines.append(last_line)
+            # print(last_line.points)
         else:
-            new_lines.append(Line(line.number, line.taxiway, line.type, line.oneway, line.radium, temp_points))
+            # print('11111111111111')
+            # print(temp_points)
+            new_lines.append(Line0(line.number, line.taxiway, line.type, line.oneway, line.radium, temp_points))
 
     return new_lines
 
@@ -90,20 +104,22 @@ def load(filename):
 
     for line in lines:
         words = line.strip().split(' ')
-        if words[0] == 'l' and words[2] != 'pushback' and not words[1].isdigit():  # Line description
-            taxiway = words[1]
-            type = words[2]
-            oneway = words[3]
-            radius = float(words[4])
-            xys = get_xys_float(words[5:-1])
-            length = geo.length(xys)
+        if words[0] == 'l' and not words[1].isdigit():  # Line description
+            if words[2] != 'pushback':
+                taxiway = words[1]
+                type = words[2]
+                oneway = words[3]
+                radius = float(words[4])
+                xys = get_xys_float(words[5:])
+                length = geo.length(xys)
 
-            line_obj = Line(taxiway, type, oneway, radius, xys)
+                line_obj = Line0(taxiway, type, oneway, radius, xys)
 
-            if length > 110:
-                new_lines.extend(split_line(line_obj))
-            else:
-                new_lines.append(line_obj)
+                if length > 110:
+                    new_lines.extend(split_line(line_obj))
+                else:
+                    # print(xys, length, words)
+                    new_lines.append(line_obj)
         else:
             other_lines.append(line.strip())
 

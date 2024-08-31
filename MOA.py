@@ -13,7 +13,7 @@ def read_cost_vector(n, m, costs):
     return C_n_m
 
 
-def check_time_windows(segment, time_windows, c_n_m_l, G_op, G_cl, start_time):
+def check_time_windows(segment, time_windows, c_n_m_l, G_op, G_cl, start_time, g_n):
     # This should check time windows for all edges within the segment
     check = False
     holding_enabled = False
@@ -22,24 +22,58 @@ def check_time_windows(segment, time_windows, c_n_m_l, G_op, G_cl, start_time):
         n = segment[0]
 
         if n in G_op and G_op[n]:
+            # print('111111')
             current_time = start_time + next(iter(G_op[n]))[0]
         elif n in G_cl and G_cl[n]:
+            # print('222222')
             current_time = start_time + next(iter(G_cl[n]))[0]
 
+        # current_time0 = start_time + g_n[0]
+        # if current_time0 != current_time:
+        #     print('NNNnnnnnnnn', current_time, current_time0)
+        # else:
+        #     print('Y0000000000000000', current_time)
+
         if c_n_m_l[0] + current_time > window_end:
-            check = False
+            check = True
             break
         elif current_time < window_start and window_end - window_start >= c_n_m_l[0]:
-            check = True            
+            check = True
             holding_enabled = True
             holdcost = window_start - current_time
             holding_cost = (holdcost, holdcost * 0.0355)
             # if holdcost > 1000:
             # print(holding_cost, start_time, window_start, current_time)
-        elif window_start <= c_n_m_l[0] + current_time <= window_end:
+        elif window_start <= current_time < window_end and window_end - window_start >= c_n_m_l[0]:
             check = False
             holding_enabled = True
             holding_cost = (0, 0)
+
+    # for window_start, window_end in time_windows[segment]:
+    #     n = segment[1]
+    #     current_time = start_time
+    #     # current_time = start_time - g_n[0]
+    #
+    #     if n in G_op and G_op[n]:
+    #         current_time = start_time - next(iter(G_op[n]))[0]
+    #     elif n in G_cl and G_cl[n]:
+    #         current_time = start_time - next(iter(G_cl[n]))[0]
+    #
+    #     if current_time > window_end:
+    #         check = True
+    #         # holding_enabled = False
+    #         break
+    #     elif current_time - c_n_m_l[0] < window_start and window_end - window_start >= c_n_m_l[0]:
+    #         check = True
+    #         holding_enabled = True
+    #         holdcost = window_start - current_time + c_n_m_l[0]
+    #         holding_cost = (holdcost, holdcost * 0.0355)
+    #         # if holdcost > 1000:
+    #         # print(holding_cost, start_time, window_start, current_time)
+    #     elif window_start <= current_time - c_n_m_l[0] < window_end and window_end - window_start >= c_n_m_l[0]:
+    #         check = False
+    #         holding_enabled = True
+    #         holding_cost = (0, 0)
 
     return check, holding_enabled, holding_cost, c_n_m_l
 
@@ -172,51 +206,52 @@ def heuristic_function(current_position, target_position, graph, weights, time_w
     :return: Tuple of heuristic time and fuel cost estimates.
     """
     # Calculate straight line distance
-    # distance = (target_position[0] - current_position[0]) + (target_position[1] - current_position[1])
-    # source = current_position
-    # target = target_position
-    #
-    # graph_copy = graph
-    # labelpath, path, new_time_windows, time_cost = QPPTW.QPPTW_algorithm(graph_copy, weights, time_windows, source, target,
-    #                                                                 start_time, in_angles, out_angles, Stand)
-    # if time_cost < 3000:
-    #     fuel_cost = 0
-    #     for i in range(1, len(path)):
-    #         current_vertex = path[i - 1]
-    #         next_vertex = path[i]
-    #         edge = (current_vertex, next_vertex)
-    #         # fuel_cost = 0
-    #         if edge in Initial_network.turn_lines:
-    #             # print( Initial_network.thrust_level[abs(Initial_network.turn_lines[edge]) - 3])
-    #             # print(Initial_network.turn_lines[edge])
-    #             fuel_cost = fuel_cost + weights[edge] * Initial_network.thrust_level[abs(Initial_network.turn_lines[edge]) - 3]
-    #             # fuel_cost = fuel_cost + weights[edge] * Initial_network.thrust_level[0]
-    #         else:
-    #             fuel_cost = fuel_cost + weights[edge] * Initial_network.thrust_level[-1]
-    # else:
-    #     # print(time_cost)
-    #     fuel_cost = time_cost
-    # # print(time_cost, source, target)
-    # # fuel_cost = 0
-    # h_m = (time_cost, fuel_cost)
+    if cost_of_path:
+        source = str(current_position)
+        target = str(target_position)
+        # Fuel estimate based on minimum fuel rate and time estimate
 
-    source = str(current_position)
-    target = str(target_position)
-    # Fuel estimate based on minimum fuel rate and time estimate
-
-    if cost_of_path[source][target] == 0:
-        time_estimate = 0
-        fuel_estimate = 0
+        if cost_of_path[source][target] == 0:
+            time_estimate = 0
+            fuel_estimate = 0
+        else:
+            time_estimate = cost_of_path[source][target][0]
+            fuel_estimate = cost_of_path[source][target][1]
+        h_m = (time_estimate * 1, fuel_estimate * 1)
     else:
-        time_estimate = cost_of_path[source][target][0]
-        fuel_estimate = cost_of_path[source][target][1]
-    h_m = (time_estimate * 1, fuel_estimate * 1)
-    # print(h_m)
+        source = current_position
+        target = target_position
+
+        graph_copy = graph
+        labelpath, path, new_time_windows, time_cost = QPPTW.QPPTW_algorithm(graph_copy, weights, time_windows, source, target,
+                                                                        start_time, in_angles, out_angles, Stand)
+
+        if time_cost < 3000:
+            fuel_cost = 0
+            for i in range(1, len(path)):
+                current_vertex = path[i - 1]
+                next_vertex = path[i]
+                edge = (current_vertex, next_vertex)
+                # fuel_cost = 0
+                if edge in Initial_network.turn_lines:
+                    # print( Initial_network.thrust_level[abs(Initial_network.turn_lines[edge]) - 3])
+                    # print(Initial_network.turn_lines[edge])
+                    fuel_cost = fuel_cost + weights[edge] * Initial_network.thrust_level[abs(Initial_network.turn_lines[edge]) - 3]
+                    # fuel_cost = fuel_cost + weights[edge] * Initial_network.thrust_level[0]
+                else:
+                    fuel_cost = fuel_cost + weights[edge] * Initial_network.thrust_level[-1]
+        else:
+            # print(time_cost)
+            fuel_cost = time_cost
+        # print(time_cost, source, target)
+        # fuel_cost = 0
+        h_m = (time_cost, fuel_cost)
     return h_m
 
 
-def AMOA_star(start, end, costs, graph, time_windows, start_time, out_angles, in_angles, Stand, weights, cost_of_path, W):
+def AMOA_star(start, end, costs, graph, time_windows, start_time, out_angles, in_angles, Stand, weights, cost_of_path, W, graph0, windoew0, flightnum):
     SG = {}  # Acyclic search graph
+    SGt = {}
     G_op = {start: {(0, 0)}}
     G_cl = {start: set()}
     OPEN = [(start, (0, 0), (0, 0))]
@@ -228,9 +263,16 @@ def AMOA_star(start, end, costs, graph, time_windows, start_time, out_angles, in
         OPEN.remove((n, g_n, f_n))
         OPEN = [item for item in OPEN if not any(math.isinf(x) for x in item[2])]
 
+        if n == (22509, 7489):
+            pass
+
         exists_in_G_op = any(g_n in value_set for value_set in G_op.values())
         if exists_in_G_op:
+            # key_to_remove = [k for k, v in G_op.items() if g_n in v]  # 假设 g_n 只在一个键的值集合中
+            # if len(key_to_remove) >= 2:
+            #     print(len(key_to_remove), key_to_remove)
             key_to_remove = [k for k, v in G_op.items() if g_n in v][0]  # 假设 g_n 只在一个键的值集合中
+            # print(len(key_to_remove), key_to_remove)
             G_op.pop(key_to_remove)
 
         if n in G_cl:
@@ -269,12 +311,12 @@ def AMOA_star(start, end, costs, graph, time_windows, start_time, out_angles, in
                         c_n_m_l = C_n_m
                         n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows, start_time, C_n_m, c_n_m_l, segment, holding_time = \
                             expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows,
-                                   start_time, C_n_m, c_n_m_l, segment, weights,  in_angles, out_angles, Stand, cost_of_path, holding_time)
+                                   start_time, C_n_m, c_n_m_l, segment, weights,  in_angles, out_angles, Stand, cost_of_path, holding_time, graph0, windoew0, SGt)
                     elif len(C_n_m) >= 1 and isinstance(C_n_m, list):  # Normal segment
                         for c_n_m_l in C_n_m:
                             n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows, start_time, C_n_m, c_n_m_l, segment, holding_time = \
                                 expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows,
-                                       start_time, C_n_m, c_n_m_l, segment, weights,  in_angles, out_angles, Stand, cost_of_path, holding_time)
+                                       start_time, C_n_m, c_n_m_l, segment, weights,  in_angles, out_angles, Stand, cost_of_path, holding_time, graph0, windoew0, SGt)
 
     path = reconstruct_paths(SG, n, start)
     COSTS = None
@@ -282,9 +324,9 @@ def AMOA_star(start, end, costs, graph, time_windows, start_time, out_angles, in
 
 
 def expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows, start_time, C_n_m, c_n_m_l,
-           segment, weights,  in_angles, out_angles, Stand, cost_of_path, holding_time):
+           segment, weights,  in_angles, out_angles, Stand, cost_of_path, holding_time, graph0, windoew0, SGt):
     check, holding_enabled, holding_cost, c_n_m_l = check_time_windows(segment, time_windows, c_n_m_l, G_op, G_cl,
-                                                              start_time)
+                                                              start_time, g_n)
     # check = True
     if check:
         #  holding_enabled is Boolean type
@@ -298,7 +340,7 @@ def expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_
 
     g_m = tuple(sum(x) for x in zip(g_n, c_n_m_l))
     if m not in SG:
-        h_m = heuristic_function(m, end, graph, weights, time_windows,start_time, in_angles, out_angles, Stand, cost_of_path)
+        h_m = heuristic_function(m, end, graph, weights,  windoew0, start_time, in_angles, out_angles, Stand, cost_of_path)
         f_m = tuple(sum(x) for x in zip(g_m, h_m))
         # f_m = (f_m[0], 0)
         # if not is_dominated(f_m, COSTS):
@@ -314,7 +356,7 @@ def expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_
             # eliminate_dominated(g_m, G_op.get(m, set()).union(G_cl.get(m, set())))
             G_op, G_cl, OPEN = eliminate_dominated(m, g_m, G_op, G_cl, OPEN)
             # f_m = tuple(sum(x) for x in zip(g_m, heuristic_function(m, end)))
-            h_m = heuristic_function(m, end, graph, weights, time_windows, start_time, in_angles, out_angles, Stand,
+            h_m = heuristic_function(m, end, graph, weights,  windoew0, start_time, in_angles, out_angles, Stand,
                                      cost_of_path)
             f_m = tuple(sum(x) for x in zip(g_m, h_m))
             # f_m = (f_m[0], 0)

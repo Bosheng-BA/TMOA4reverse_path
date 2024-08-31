@@ -1,7 +1,7 @@
 import os
 # 打开并读取文件
 weight = [1, 0]
-file = '20170819_ZBTJ-PN_MANEX.csv'
+file = '20170803_ZBTJ-PN_MANEX.csv'
 # file = 'gaptraffic-2017-08-03-new.csv'
 DATA_PATH = "Datas/DATA"
 APT_FILE = os.path.join(DATA_PATH, "tianjin_new.txt")

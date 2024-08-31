@@ -13,7 +13,7 @@ def create_matplotlib_figure(graph, path, stand, runway, flightnum, turn_lines):
     # 创建保存图像的文件夹
     # save_dir = 'new_QPPTW_saved_figures_2019-08-07-new-考虑修改时间窗'
     # save_dir = 'Draw/TEST-' + Cst.file + '/' + str(Cst.weight)
-    save_dir = 'Draw/TEST-0805-0' + Cst.file
+    save_dir = 'Draw/TEST-0828-2' + Cst.file
     # path = []
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
@@ -36,8 +36,8 @@ def create_matplotlib_figure(graph, path, stand, runway, flightnum, turn_lines):
                 ax.plot([point1[0], point2[0]], [point1[1], point2[1]], color='gray')
 
     # 绘制节点
-    # for node in graph.keys():
-    #     ax.scatter(node[0], node[1], color='gray')
+    for node in graph.keys():
+        ax.scatter(node[0], node[1], color='gray', s=10)
 
     # Draw the source point and the target point
     if path:
@@ -68,6 +68,14 @@ def create_matplotlib_figure(graph, path, stand, runway, flightnum, turn_lines):
                 added_blue_label = True
             else:
                 ax.plot(path_x, path_y, color='blue', linewidth=2)
+
+        # 绘制特殊想查看的线路
+        # pll = [(22622, 8111), (22622, 8107)]
+        # for i in range(1, len(pll)):
+        #     current_vertex = pll[i - 1]
+        #     next_vertex = pll[i]
+        #     pl = [current_vertex, next_vertex]
+        #     ax.plot([pl[0][0], pl[1][0]], [pl[0][1], pl[1][1]], color='green', linewidth=3.5)
 
 
     # path = [(0, 0), (100, 0), (200, 0)]
