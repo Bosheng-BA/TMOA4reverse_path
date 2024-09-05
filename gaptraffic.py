@@ -78,12 +78,15 @@ def read_flights(files_name):
                     # print(type(row1['Parking']), row1['Parking'])
                     # print(type(row['Parking']), row['Parking'])
                     # if row1['Parking'][0] == row['Parking'][0] and row1['Parking'][1] == row['Parking'][1]:
-                    if str(row1['Parking'])[:2] == str(row['Parking'])[:2]:
-                        df2.loc[i, 'TTOT'] += wt
-                    elif str(row1['Parking'])[:1] == str(row['Parking'])[:1]:
-                        df2.loc[i, 'TTOT'] += wt
                     # if str(row1['Parking'])[:2] == str(row['Parking'])[:2]:
                     #     df2.loc[i, 'TTOT'] += wt
+                    # elif str(row1['Parking'])[:1] == str(row['Parking'])[:1]:
+                    #     df2.loc[i, 'TTOT'] += wt
+                    # if str(row1['Parking'])[:1] == str(row['Parking'])[:1]:
+                    df2.loc[i, 'TTOT'] += wt
+                    # df2.loc[i, 'TTOT'] += 0
+                    if str(row1['Parking'])[:1] == str(row['Parking'])[:1]:
+                        df2.loc[i, 'TTOT'] += wt
 
     # df_sorted = squence_csv(df2, airc_type_dict, 60, 120, -60, -120)
     df_sorted = squence_csv(df2, airc_type_dict, 60-600, 120-600, -60, -120)

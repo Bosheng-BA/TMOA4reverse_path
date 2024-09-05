@@ -219,7 +219,7 @@ def QPPTW_algorithm(graph, weights, time_windows, source, target, start_time, in
     return None, pathlist, time_windows, float('inf')
 
 
-def construct_labeled_path(graph, weights, time_windows, source, start_time, path, flight):
+def construct_labeled_path(graph, weights, time_windows, source, start_time, path, flight, speed_change, pt):
     # 初始化标签字典
     labels = {v: [] for v in graph.keys()}
 
@@ -233,15 +233,23 @@ def construct_labeled_path(graph, weights, time_windows, source, start_time, pat
         current_vertex = path[i-1]
         next_vertex = path[i]
         edge = (current_vertex, next_vertex)
-
         # 计算到达下一个顶点的时间
         travel_time = weights[edge]  # 可能需要根据飞机的速度进行更改
+        # print(len(pt), len(path), pt[100])
+        (travel_time, waiting_time) = pt[i - 1]
+        if waiting_time != 0:
+            # print(waiting_time)
+            travel_time -= waiting_time
+        new_travel_time = travel_time * speed_change
+        # print(travel_time, new_travel_time)
+        travel_time = travel_time * speed_change + waiting_time
         current_start, _ = prev_label[1]
         arrival_time = current_start
 
         """存在一个问题，这里计算的traveltime用的直接是weight直接就是最快的速度的，
         但是实际是可能因为存在冲突，并不全是最快的速度啊啊啊啊啊"""
         # 调整时间窗口
+        """速度的调整不是很精细，60m的安全间隔需要根据飞机当前的速度来决定其实"""
         next_travel_time = weights[(next_vertex, path[i + 1])] if i < len(path) - 1 else 0
         adjusted_end_time = arrival_time + (20 if next_travel_time > 20 else next_travel_time)
 

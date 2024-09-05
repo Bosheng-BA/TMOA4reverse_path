@@ -108,18 +108,23 @@ def is_dominated(c, c_prime):
     return dominated
 
 
-def reconstruct_paths(SG, end, start):
+def reconstruct_paths(SG, end, start, SGt):
     # Placeholder for the path reconstruction process from the search graph SG
     path = []
+    pt = []  # 用于记录成本的时间的变化，以及速度的变化
     current_node = end
+    nt = SGt.get(end)
     i = 0
 
     while current_node is not start:
         i += 1
         path.append(current_node)
+        pt.append(nt)
         current_node = SG.get(current_node)  # 获取父节点
+        # nt = SGt[current_node]
+        nt = SGt.get(current_node)
     path.append(start)
-    return path[::-1]  # 反转路径
+    return path[::-1], pt[::-1]  # 反转路径
 
 
 def eliminate_dominated(m, g_m, G_op, G_cl, OPEN):
@@ -284,8 +289,8 @@ def AMOA_star(start, end, costs, graph, time_windows, start_time, out_angles, in
             COSTS.add(g_n)
             OPEN = [alt for alt in OPEN if is_dominated(alt[2], g_n)]
             if not OPEN:
-                path = reconstruct_paths(SG, end, start)
-                return path, COSTS, holding_time
+                path, pt = reconstruct_paths(SG, end, start, SGt)
+                return path, COSTS, holding_time, pt
         else:
             for segment in graph[n]:
                 m = segment[1]  # Assuming segment identifies the end node
@@ -318,21 +323,19 @@ def AMOA_star(start, end, costs, graph, time_windows, start_time, out_angles, in
                                 expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows,
                                        start_time, C_n_m, c_n_m_l, segment, weights,  in_angles, out_angles, Stand, cost_of_path, holding_time, graph0, windoew0, SGt)
 
-    path = reconstruct_paths(SG, n, start)
+    path, _ = reconstruct_paths(SG, n, start, SGt)
     COSTS = None
-    return path, COSTS, holding_time
+    return path, COSTS, holding_time, _
 
 
 def expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows, start_time, C_n_m, c_n_m_l,
            segment, weights,  in_angles, out_angles, Stand, cost_of_path, holding_time, graph0, windoew0, SGt):
     check, holding_enabled, holding_cost, c_n_m_l = check_time_windows(segment, time_windows, c_n_m_l, G_op, G_cl,
                                                               start_time, g_n)
-    # check = True
     if check:
         #  holding_enabled is Boolean type
         if holding_enabled:
             # print("Holding_enable:", holding_cost, end)
-            # hoding_time = holding_time + holding_cost[0]
             c_n_m_l = add_holding_cost(c_n_m_l, holding_cost)
         else:
             # print("No_Holding_enable")
@@ -342,27 +345,23 @@ def expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_
     if m not in SG:
         h_m = heuristic_function(m, end, graph, weights,  windoew0, start_time, in_angles, out_angles, Stand, cost_of_path)
         f_m = tuple(sum(x) for x in zip(g_m, h_m))
-        # f_m = (f_m[0], 0)
-        # if not is_dominated(f_m, COSTS):
         if not is_dominated(COSTS, f_m):
             OPEN.append((m, g_m, f_m))
             G_op[m] = {g_m}
             SG[m] = n
+            SGt[m] = (c_n_m_l[0], holding_cost[0])
     else:
         if g_m in G_op.get(m, set()).union(G_cl.get(m, set())):
-            # m = m
             SG[m] = n
+            SGt[m] = (c_n_m_l[0], holding_cost[0])
         elif not any(is_dominated(other, g_m) for other in G_op.get(m, set()).union(G_cl.get(m, set()))):
-            # eliminate_dominated(g_m, G_op.get(m, set()).union(G_cl.get(m, set())))
             G_op, G_cl, OPEN = eliminate_dominated(m, g_m, G_op, G_cl, OPEN)
-            # f_m = tuple(sum(x) for x in zip(g_m, heuristic_function(m, end)))
             h_m = heuristic_function(m, end, graph, weights,  windoew0, start_time, in_angles, out_angles, Stand,
                                      cost_of_path)
             f_m = tuple(sum(x) for x in zip(g_m, h_m))
-            # f_m = (f_m[0], 0)
             if not is_dominated(COSTS, f_m):
                 OPEN.append((m, g_m, f_m))
                 G_op[m] = {g_m}
-                # if n not in Stand:
                 SG[m] = n
+                SGt[m] = (c_n_m_l[0], holding_cost[0])
     return n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows, start_time, C_n_m, c_n_m_l, segment, holding_time

@@ -120,6 +120,8 @@ def load(filename):
                 else:
                     # print(xys, length, words)
                     new_lines.append(line_obj)
+            else:
+                other_lines.append(line.strip())
         else:
             other_lines.append(line.strip())
 

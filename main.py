@@ -18,6 +18,7 @@ import csv
 import Simulate
 # above imported library
 import MOA2
+import numpy as np
 
 """ Default airport and traffic files """
 DATA_PATH = Cst.DATA_PATH
@@ -72,14 +73,20 @@ if __name__ == "__main__":
     points = the_airport2.points
     runways = the_airport2.runways
 
+    # 定义文件路径
+    input_file = "speed_changes_matrix.txt"
+
+    # 从文件中读取矩阵
+    speed_matrix = np.loadtxt(input_file, delimiter=",")
+
     stand_dict, runway_dict, stand_list, stand_dict2, runway_list, runway_dict2 \
         = Sour_and_Des.stand_and_runway_points(points=the_airport2.points)
 
     """遍历一天"""
-    flight_file_name_list = Cst.file
+    # flight_file_name_list = Cst.file
     # print(Cst.file)
     """一次性遍历十天"""
-    # flight_file_name_list = Cst.flight_file_name_list
+    flight_file_name_list = Cst.flight_file_name_list
 
     COSTS = []
     Stand = []
@@ -105,10 +112,6 @@ if __name__ == "__main__":
         with open('cost_of_path_cut60.json', 'r') as file:
             cost_of_path = json.load(file)
 
-        # print(cost_of_path[str((22125, 7564))])
-        # cost_of_path[str((22125, 7564))][str((22138,7658))] = [cost_of_path[str((22125, 7564))][str((22138,7658))][0], 0]
-        # print(cost_of_path[str((22125, 7564))][str((22138, 7658))])
-
         Total_cost = 0
         init_Tcost = 0
         turn_times = 0
@@ -116,35 +119,36 @@ if __name__ == "__main__":
         Lenth = 0
         totalholding_time = 0
 
-        # for flightnum in list_def:
         # 使用tqdm来遍历航班列表，并设置进度条长度(ncols)为100
         for flightnum in tqdm(range(0, len(flights)), ncols=100):
-            # print(flightnum)
-            # for flightnum in range(len(flights)):
         # for flightnum in range(276, 280):
+            # print(flightnum)
             # 多飞机规划路径：初始化开始时间
             # init_time = datetime.datetime(2023, 4, 17, 7, 0)
 
             results = []
             paths = []
+            pts = []
             COST_list = []
             flight = flights[flightnum]
-
-            # print("Flight:", flightnum, flight.departure)
 
             # 这里是选择确定飞机的推出的时间
             if flight.departure == 'ZBTJ':
                 start_time = flight.start_taxi_time
+                start_time = flight.ttot
                 if Loop:
                     start_time = Paths[flightnum].BOT
             else:
                 start_time = flight.start_taxi_time
-                # print(start_time, flightnum)
 
             # 这里是选择确定飞机的起飞与终点
             source, target = Sour_and_Des.find_the_sour_des(stands=stand_dict, pists=runway_dict, flight=flight)
             name1 = show_point_name(source, points=the_airport2.points)
             name2 = show_point_name(target, points=the_airport2.points)
+
+            if flightnum == 67:
+                pass
+            # print(start_time, target, flightnum, flight.departure == 'ZBTJ')
 
             # target = (20095, 6987)
             # source = (22530, 8090)
@@ -162,8 +166,9 @@ if __name__ == "__main__":
                 source = target
                 target = s
                 start_time = flight.ttot
-                if flightnum == 279:
-                    start_time += 60
+                # if flightnum == 279:
+                # if flightnum == 324 or flightnum == 431:
+                #     start_time += 60
 
                 if check >= 2:  # When the stand have two ways to pushback, we need choose one
                     for i in range(len(list_edge)):
@@ -171,20 +176,22 @@ if __name__ == "__main__":
                         if e in pushback_edges:
                             graph_r[e[1]].remove(e)
                             graph[e[0]].remove(e)
-                            path, COST, holding_time = MOA2.AMOA_star(source, target, costs, graph_r, time_windows,
+                            path, COST, holding_time, pt = MOA2.AMOA_star(source, target, costs, graph_r, time_windows,
                                                                      start_time, out_angles,
                                                                      in_angles, Stand, weights, cost_of_path, W, graph, windoew0, flightnum)
                             graph_r[e[1]].append(e)
                             graph[e[0]].append(e)
                             COST_list.append(COST)
                             paths.append(path)
+                            pts.append(pt)
 
                     if COST_list:
                         COST = Initial_network.find_min_in_filtered_list0(COST_list)
                         path = Initial_network.correspond_path(paths, COST_list, COST)
+                        pt = pts[paths.index(path)] if path else None
 
                 else:  # the normal condition
-                    path, COST, holding_time = MOA2.AMOA_star(source, target, costs, graph_r, time_windows, start_time,
+                    path, COST, holding_time, pt = MOA2.AMOA_star(source, target, costs, graph_r, time_windows, start_time,
                                                              out_angles, in_angles,
                                                              Stand, weights, cost_of_path, W, graph, windoew0, flightnum)
                 # 为了在形成带有标签的路径的起始时间正确
@@ -198,19 +205,20 @@ if __name__ == "__main__":
                     for e in list_edge:
                         if e in pushback_edges:
                             graph_copy[source].remove(e)
-                            path, COST, holding_time = MOA.AMOA_star(source, target, costs, graph_copy, time_windows,
+                            path, COST, holding_time, pt = MOA.AMOA_star(source, target, costs, graph_copy, time_windows,
                                                                      start_time, out_angles,
                                                                      in_angles, Stand, weights, cost_of_path,  W, graph, windoew0, flightnum)
                             graph_copy[source].append(e)
-                            # print(COST, e, list_edge)
                             COST_list.append(COST)
                             paths.append(path)
+                            pts.append(pt)
 
                     if COST_list:
                         COST = Initial_network.find_min_in_filtered_list0(COST_list)
                         path = Initial_network.correspond_path(paths, COST_list, COST)
+                        pt = pts[paths.index(path)]
                 else:  # the normal condition
-                    path, COST, holding_time = MOA.AMOA_star(source, target, costs, graph, time_windows, start_time,
+                    path, COST, holding_time, pt = MOA.AMOA_star(source, target, costs, graph, time_windows, start_time,
                                                              out_angles, in_angles,
                                                              Stand, weights, cost_of_path, W, graph, windoew0, flightnum)
 
@@ -220,7 +228,10 @@ if __name__ == "__main__":
                 # if path:
                 #     Draw_path.create_matplotlib_figure(graph, path, name1, name2, flightnum, turn_lines)
             elif path:
-                label_path = QPPTW.construct_labeled_path(graph, weights, time_windows, source, start_time, path, flight)
+                """ 输入speed的变化情况 """
+                speed_change = speed_matrix[flightnum]
+                speed_change = 1
+                label_path = QPPTW.construct_labeled_path(graph, weights, time_windows, source, start_time, path, flight, speed_change, pt)
                 time_windows = QPPTW.Readjustment_time_windows(graph, weights, time_windows, label_path)
                 # graph0, weights0, time_windows0, in_angles0, out_angles0, costs0, pushback_edges0 = \
                 #     Initial_network.initial_network(the_airport)
