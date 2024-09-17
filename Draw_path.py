@@ -13,7 +13,7 @@ def create_matplotlib_figure(graph, path, stand, runway, flightnum, turn_lines):
     # 创建保存图像的文件夹
     # save_dir = 'new_QPPTW_saved_figures_2019-08-07-new-考虑修改时间窗'
     # save_dir = 'Draw/TEST-' + Cst.file + '/' + str(Cst.weight)
-    save_dir = 'Draw/TEST-0901-0' + Cst.file
+    save_dir = 'Draw/TEST-0909-1' + '-' + Cst.file
     # path = []
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)

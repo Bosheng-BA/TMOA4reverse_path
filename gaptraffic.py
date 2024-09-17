@@ -63,18 +63,27 @@ def read_flights(files_name):
     # 创建一个空列表来存储Flight对象
     flights = []
 
-    df_new = squence_csv(df, airc_type_dict, 60-600, 120-600, -60, -120)
+    # df_new = squence_csv(df, airc_type_dict, 60-600, 120-600, -60, -120)
+    df_new = squence_csv(df, airc_type_dict, -600, -600, 0, 0)
     df_new.to_csv(files_name + "0000000.csv", index=False)
 
     df2 = pd.read_csv(files_name + "0000000.csv")
-    for i in range(len(df2)):
-        row = df2.loc[i]
-        # print(row)
-        if row['departure'] == 'ZBTJ' and i >= 1:
-            for j in range(0, i):
-                row1 = df2.loc[j]
-                wt = Waiting[airc_type_dict[row1['Type']]][airc_type_dict[row['Type']]] * 60
-                if row1['departure'] == 'ZBTJ' and row['TTOT'] - row1['TTOT'] < wt:
+    for i, row in df2.iterrows():
+        for j in range(0, i):
+            row1 = df2.loc[j]
+            wt = Waiting[airc_type_dict[row1['Type']]][airc_type_dict[row['Type']]] * 60
+            flight_t2 = row1['TTOT'] if row1['departure'] == 'ZBTJ' else row1['ALDT']
+
+            if row['departure'] == 'ZBTJ' and row['TTOT'] - flight_t2 < wt:
+                df2.at[i, 'TTOT'] += wt
+            elif row['arrivee'] == 'ZBTJ' and row['ALDT'] - flight_t2 < wt:
+                df2.at[i, 'ALDT'] += wt
+
+        # if row['departure'] == 'ZBTJ' and i >= 1:
+        #     for j in range(0, i):
+        #         row1 = df2.loc[j]
+        #         wt = Waiting[airc_type_dict[row1['Type']]][airc_type_dict[row['Type']]] * 60
+        #         if row1['departure'] == 'ZBTJ' and row['TTOT'] - row1['TTOT'] < wt:
                     # print(type(row1['Parking']), row1['Parking'])
                     # print(type(row['Parking']), row['Parking'])
                     # if row1['Parking'][0] == row['Parking'][0] and row1['Parking'][1] == row['Parking'][1]:
@@ -83,13 +92,13 @@ def read_flights(files_name):
                     # elif str(row1['Parking'])[:1] == str(row['Parking'])[:1]:
                     #     df2.loc[i, 'TTOT'] += wt
                     # if str(row1['Parking'])[:1] == str(row['Parking'])[:1]:
-                    df2.loc[i, 'TTOT'] += wt
+                    # df2.loc[i, 'TTOT'] += wt
                     # df2.loc[i, 'TTOT'] += 0
-                    if str(row1['Parking'])[:1] == str(row['Parking'])[:1]:
-                        df2.loc[i, 'TTOT'] += wt
+                    # if str(row1['Parking'])[:1] == str(row['Parking'])[:1]:
+                    #     df2.loc[i, 'TTOT'] += wt
 
-    # df_sorted = squence_csv(df2, airc_type_dict, 60, 120, -60, -120)
-    df_sorted = squence_csv(df2, airc_type_dict, 60-600, 120-600, -60, -120)
+    df_sorted = squence_csv(df2, airc_type_dict, -600, -600, 0, 0)
+    # df_sorted = squence_csv(df2, airc_type_dict, 60-600, 120-600, -60, -120)
     df_sorted['QFU'] = '16R'
     df_sorted.to_csv(files_name + "sorted_file.csv", index=False)
 

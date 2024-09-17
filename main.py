@@ -19,6 +19,7 @@ import Simulate
 # above imported library
 import MOA2
 import numpy as np
+import Simulations
 
 """ Default airport and traffic files """
 DATA_PATH = Cst.DATA_PATH
@@ -83,14 +84,15 @@ if __name__ == "__main__":
         = Sour_and_Des.stand_and_runway_points(points=the_airport2.points)
 
     """遍历一天"""
-    # flight_file_name_list = Cst.file
+    flight_file_name_list = Cst.file
     # print(Cst.file)
     """一次性遍历十天"""
-    flight_file_name_list = Cst.flight_file_name_list
+    # flight_file_name_list = Cst.flight_file_name_list
 
     COSTS = []
     Stand = []
     Paths2 = []
+
     for p in points:
         if p.ptype == 'Stand' or p.ptype == 'Runway':
             Stand.append(p.xy)
@@ -99,7 +101,9 @@ if __name__ == "__main__":
     def algorithm(flights, file_name, W, Paths, Loop):
         graph, weights, time_windows, in_angles, out_angles, costs, pushback_edges, init_l, turn_lines, graph_r = \
             Initial_network.initial_network(the_airport2)
+
         Failure_flight = []
+        fix_file = []
 
         graph_copy = copy.deepcopy(graph)
         windoew0 = copy.deepcopy(time_windows)
@@ -108,7 +112,7 @@ if __name__ == "__main__":
         # Initial_network.initial_cost(graph, weights, time_windows, in_angles, out_angles, Stand, pushback_edges, graph_copy)
 
         # with open('cost_of_path.json', 'r') as file:
-        cost_of_path = 0
+        # cost_of_path = 0
         with open('cost_of_path_cut60.json', 'r') as file:
             cost_of_path = json.load(file)
 
@@ -140,14 +144,13 @@ if __name__ == "__main__":
                     start_time = Paths[flightnum].BOT
             else:
                 start_time = flight.start_taxi_time
+            # print(flight.start_taxi_time, flight.departure)
 
             # 这里是选择确定飞机的起飞与终点
             source, target = Sour_and_Des.find_the_sour_des(stands=stand_dict, pists=runway_dict, flight=flight)
             name1 = show_point_name(source, points=the_airport2.points)
             name2 = show_point_name(target, points=the_airport2.points)
 
-            if flightnum == 67:
-                pass
             # print(start_time, target, flightnum, flight.departure == 'ZBTJ')
 
             # target = (20095, 6987)
@@ -166,8 +169,9 @@ if __name__ == "__main__":
                 source = target
                 target = s
                 start_time = flight.ttot
+
                 # if flightnum == 279:
-                # if flightnum == 324 or flightnum == 431:
+                # # if flightnum == 324 or flightnum == 431:
                 #     start_time += 60
 
                 if check >= 2:  # When the stand have two ways to pushback, we need choose one
@@ -233,6 +237,7 @@ if __name__ == "__main__":
                 speed_change = 1
                 label_path = QPPTW.construct_labeled_path(graph, weights, time_windows, source, start_time, path, flight, speed_change, pt)
                 time_windows = QPPTW.Readjustment_time_windows(graph, weights, time_windows, label_path)
+                fix_file = Simulate.record_path(graph, path, pt, flight, start_time, fix_file)
                 # graph0, weights0, time_windows0, in_angles0, out_angles0, costs0, pushback_edges0 = \
                 #     Initial_network.initial_network(the_airport)
                 # print("YESYESYES", path, start_time, flight.start_taxi_time, flightnum, flight.departure)
@@ -294,6 +299,9 @@ if __name__ == "__main__":
         # 确保目录存在
         # file = Cst.file
         # os.makedirs(file, exist_ok=True)
+
+        Simulate.save_to_file(fix_file, 'output_path.txt')
+
         if Loop:
             return COSTS, Paths2
         return COSTS, Paths

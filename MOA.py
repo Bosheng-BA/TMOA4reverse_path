@@ -22,17 +22,9 @@ def check_time_windows(segment, time_windows, c_n_m_l, G_op, G_cl, start_time, g
         n = segment[0]
 
         if n in G_op and G_op[n]:
-            # print('111111')
             current_time = start_time + next(iter(G_op[n]))[0]
         elif n in G_cl and G_cl[n]:
-            # print('222222')
             current_time = start_time + next(iter(G_cl[n]))[0]
-
-        # current_time0 = start_time + g_n[0]
-        # if current_time0 != current_time:
-        #     print('NNNnnnnnnnn', current_time, current_time0)
-        # else:
-        #     print('Y0000000000000000', current_time)
 
         if c_n_m_l[0] + current_time > window_end:
             check = True
@@ -48,32 +40,6 @@ def check_time_windows(segment, time_windows, c_n_m_l, G_op, G_cl, start_time, g
             check = False
             holding_enabled = True
             holding_cost = (0, 0)
-
-    # for window_start, window_end in time_windows[segment]:
-    #     n = segment[1]
-    #     current_time = start_time
-    #     # current_time = start_time - g_n[0]
-    #
-    #     if n in G_op and G_op[n]:
-    #         current_time = start_time - next(iter(G_op[n]))[0]
-    #     elif n in G_cl and G_cl[n]:
-    #         current_time = start_time - next(iter(G_cl[n]))[0]
-    #
-    #     if current_time > window_end:
-    #         check = True
-    #         # holding_enabled = False
-    #         break
-    #     elif current_time - c_n_m_l[0] < window_start and window_end - window_start >= c_n_m_l[0]:
-    #         check = True
-    #         holding_enabled = True
-    #         holdcost = window_start - current_time + c_n_m_l[0]
-    #         holding_cost = (holdcost, holdcost * 0.0355)
-    #         # if holdcost > 1000:
-    #         # print(holding_cost, start_time, window_start, current_time)
-    #     elif window_start <= current_time - c_n_m_l[0] < window_end and window_end - window_start >= c_n_m_l[0]:
-    #         check = False
-    #         holding_enabled = True
-    #         holding_cost = (0, 0)
 
     return check, holding_enabled, holding_cost, c_n_m_l
 
@@ -339,7 +305,7 @@ def expand(n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_
             c_n_m_l = add_holding_cost(c_n_m_l, holding_cost)
         else:
             # print("No_Holding_enable")
-            return n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows,start_time, C_n_m, c_n_m_l, segment, holding_time
+            return n, m, g_n, f_n, SG, G_op, G_cl, OPEN, COSTS, end, costs, graph, time_windows, start_time, C_n_m, c_n_m_l, segment, holding_time
 
     g_m = tuple(sum(x) for x in zip(g_n, c_n_m_l))
     if m not in SG:

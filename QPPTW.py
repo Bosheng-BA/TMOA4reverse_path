@@ -19,7 +19,7 @@ def Readjustment_time_windows(graph, weights, time_windows, path):
         if reservation[0] == path[i+1][0]:
             continue
         for i, time_window in enumerate(updated_time_windows[edge]):
-
+            # print(i)
             aj_e, bj_e = time_window
             timein_f, timeout_f = reservation[1]
             # print(reservation[1], time_window)
@@ -226,6 +226,8 @@ def construct_labeled_path(graph, weights, time_windows, source, start_time, pat
     # 创建起始点的初始标签
     initial_label = (source, (start_time, float('inf')), None)
     labels[source].append(initial_label)
+    if flight.departure == 'ZBTJ':
+        print(start_time, flight.ttot)
 
     # 为路径中的每个顶点构建标签
     prev_label = initial_label
@@ -233,8 +235,9 @@ def construct_labeled_path(graph, weights, time_windows, source, start_time, pat
         current_vertex = path[i-1]
         next_vertex = path[i]
         edge = (current_vertex, next_vertex)
+
         # 计算到达下一个顶点的时间
-        travel_time = weights[edge]  # 可能需要根据飞机的速度进行更改
+        # travel_time = weights[edge]  # 可能需要根据飞机的速度进行更改
         # print(len(pt), len(path), pt[100])
         (travel_time, waiting_time) = pt[i - 1]
         if waiting_time != 0:
@@ -257,6 +260,9 @@ def construct_labeled_path(graph, weights, time_windows, source, start_time, pat
         new_label = (next_vertex, (arrival_time, adjusted_end_time), prev_label)
         labels[next_vertex].append(new_label)
         prev_label = new_label
+
+        if flight.departure == 'ZBTJ':
+            print(arrival_time)
 
         # 检查时间窗口约束
         for window_start, window_end in time_windows[edge]:

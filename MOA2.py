@@ -60,15 +60,19 @@ def check_time_windows(segment, time_windows, c_n_m_l, G_op, G_cl, start_time, g
         # current_time -= c_n_m_l[0]
 
         if current_time - c_n_m_l[0] > window_end or current_time - c_n_m_l[0] < window_start:
+            # print("1111111111")
             check = True
             break
         elif current_time - c_n_m_l[0] < window_end and window_end - window_start >= c_n_m_l[0]:
+            # print("22222222222")
             check = True
             holding_enabled = True
             holdcost = current_time - window_end
             if holdcost >= 0:
+                # print("22222222222")
                 holding_cost = (holdcost, holdcost * 0.0355)
             else:
+                # print("22222222222")
                 holding_cost = (0, 0)
         # elif window_start <= current_time <= window_end:
         #     check = False
@@ -229,7 +233,7 @@ def select_from_open(OPEN, weight):
     # return min(OPEN, key=lambda x: (x[1][0] + x[2][0]) * weight[0] + ((x[1][1] + x[2][1]) * weight[1] * 8.06))
 
 
-def heuristic_function(current_position, target_position, graph, weights, time_windows,start_time, in_angles, out_angles, Stand, cost_of_path):
+def heuristic_function(current_position, target_position, graph, weights, time_windows, start_time, in_angles, out_angles, Stand, cost_of_path):
     """
     Calculate a heuristic estimate from the current position to the target position.
 
